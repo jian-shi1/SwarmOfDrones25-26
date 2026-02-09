@@ -1,4 +1,9 @@
-﻿class EKF:
+﻿import numpy as np
+import heapq
+from dataclasses import dataclass
+from typing import List, Tuple
+
+class EKF:
     def __init__(self, x: float, v: float, a: float, P_diag: List[float], q_a: float = 1.0):
         """
         Инициализация EKF для дрона.

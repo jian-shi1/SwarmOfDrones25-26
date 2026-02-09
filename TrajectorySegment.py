@@ -1,4 +1,6 @@
-﻿@dataclass
+﻿from dataclasses import dataclass
+
+@dataclass
 class TrajectorySegment:
     t_start: float
     x0: float

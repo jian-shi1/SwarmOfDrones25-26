@@ -1,4 +1,6 @@
-﻿class SMDController:
+﻿import numpy as np
+
+class SMDController:
     def __init__(self, ddot_x_alpha, m: float, a_max: float, s0: float, tau: float, C_friction: float):
         self.ddot_x_alpha = ddot_x_alpha
         self.m = m

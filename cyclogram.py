@@ -1,4 +1,8 @@
-﻿
+﻿import numpy as np
+from Drone import Drone
+from typing import List, Dict, Optional, Tuple
+import matplotlib.pyplot as plt
+
 def cyclogram(drones: List[Drone],
               t_plot: np.ndarray,
               alpha_idx: int = 0,

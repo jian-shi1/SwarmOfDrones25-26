@@ -1,4 +1,6 @@
-﻿class Drone:
+﻿from typing import List, Optional, Tuple
+
+class Drone:
     def __init__(self, idx: int, x0: float, leader_idx: Optional[int], alpha_idx: int):
         self.idx = idx
         self.alpha_idx = alpha_idx
