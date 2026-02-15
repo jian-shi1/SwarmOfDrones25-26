@@ -1,5 +1,4 @@
 ﻿from typing import List
-from SMDController import SMDController
 import heapq
 import numpy as np
 
@@ -7,7 +6,7 @@ class Swarm:
     """
     Рой, хранящий историю наблюдений
     """
-    def __init__(self, start_coordinates: np.ndarray, N: int =5, m: float =15.0, s0: float =2.0, H: int = 20, alpha_idx: int = None, a_max: float=g, v_max:float = v_max, R0: float = 100):
+    def __init__(self, start_coordinates: np.ndarray, N: int =5, m: float =15.0, s0: float =2.0, H: int = 20, alpha_idx: int = None, a_max: float=9.81, v_max:float = 33.3, R0: float = 100):
         self.N = N
         self.H = H
         self.m = m
