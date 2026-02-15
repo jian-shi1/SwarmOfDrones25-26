@@ -1,32 +1,39 @@
 import numpy as np
 
 
-def rectlinear_flucts(t):
+class RectlinearFlucts:
     """
-    функция с макс ускорением 10 м/с^2
-    движемся всегда вправо, иногда замедляемся до 0, но плавно
+    Пусть мы допускаем какую-то верхнюю (грубую) оценку скорости
+    до которой будет разгоняться дрон. если мы хотим чтобы он всегда двигался в одном направлении
+    то пусть его скорость будет v_max * sin^2 (pi/N * t), тогда ускорение модулируется
+    как A * sin(2 pi /N * t). Отсюда A >= pi * v/N => v_max * pi / A <= N
     """
-    return 10.0 * np.sin(2.0 * np.pi * t / 14.0)
+    def __init__(self, a_max = 10.0, v_max=33.3):
+        self.a_max = a_max
+        self.v_max = v_max
+        self.period = np.pi * self.v_max / self.a_max
+    
+    def __call__(self, t):
+        return self.a_max * np.sin(2.0 * np.pi * t / self.period)
+    
 
+class RoughBreak:
+    def __init__(self, a_max = 10.0, v_max=40.0, t_plateau = 100):
+        self.a_max = a_max
+        self.v_max = v_max
+        self.t1 = v_max / (a_max / 3)
+        self.t2 = self.t1 + t_plateau
+        self.t3 = self.t2 + self.t1
+        self.zero = 0.0
 
-def rough_break(t):
-    """
-    Сначала неспеша разгоняемся, 100 секунд гоним на максимальной скорости, потом очень резко тормозим
-    Суммарно альфа агент в движении около 125 секунд
-    """
-    t1 = 34 / 3
-    t2 = t1 + 100
-    t3 = t2 + t1
-    a_max = np.float128(10.0)
-    zero = np.float128(0.0)
-
-    if t < 0:
-        return zero
-    elif t < t1:
-        return a_max
-    elif t < t2:
-        return zero
-    elif t < t3:
-        return -a_max
-    else:
-        return zero
+    def __call__(self, t):
+        if t < 0:
+            return self.zero
+        elif t < self.t1:
+            return self.a_max
+        elif t < self.t2:
+            return self.zero
+        elif t < self.t3:
+            return -self.a_max
+        else:
+            return self.zero
