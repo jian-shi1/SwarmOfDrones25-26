@@ -1,7 +1,0 @@
-N,alpha_idx,s0,dt,steps,a_max,m,ddotx_func
-22,20,10.0,0.2,4000,5,10,lambda T: 1*np.sin(T)-1*np.cos(2*(T))+2*np.sin(3*T)+2*np.sin(4*(T))
-22,20,10.0,0.2,4000,5,10,lambda T: 1*np.sin(T)-1*np.cos(2*(T))+2*np.sin(3*T)+2*np.sin(4*(T))
-22,21,10.0,0.2,4000,3.7,10,lambda T: 1*np.sin(T)-1*np.sin(2*(T))
-22,5,10.0,0.2,4000,3.7,10,lambda T: 1*np.sin(T)-1*np.sin(2*(T))
-22,5,10.0,0.2,4000,np.sqrt(5),10,lambda T: -2*np.sin(10*T)+1*np.cos(1*T)
-22,1,10.0,0.2,4000,np.sqrt(5),10,lambda T: -2*np.sin(10*T)+1*np.cos(1*T)

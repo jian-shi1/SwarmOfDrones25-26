@@ -23,12 +23,9 @@ class SMDController:
         self.turn = -1
         self.swarm = swarm
         self.initial_distances = swarm.trajectory[0]
-        self.friction_coeff = 0.4
+        self.friction_coeff = 0.04
 
         self.rel_filters = {} # (i, j) -> EKF
-        self.eps_vel = 0.05 # порог "живости" соседа
-        self.dead_time = 2.0   # если давно не видели — игнор
-        self.b_scale = 1.0     # масштаб демпфера
 
     def _get_optimal_distances(self, i, indexes):
         return np.abs(self.initial_distances[indexes] - self.initial_distances[i])
@@ -41,89 +38,54 @@ class SMDController:
         R0 = swarm.R0
 
         # итоговые ускорения
-        acc = np.copy(self.swarm.a) # np.zeros(N)
+        acc = np.copy(self.swarm.a) # не зерос - у нас движение альфы непрерывно, не должны отставать
 
-        # ========== 1. Альфа-агент ==========
         alpha = swarm.alpha_idx
         acc[alpha] = self.ddot_x(t + dt)
 
-        # ========== 2. Кто опрашивается сейчас ==========
         self.turn = (self.turn + 1) % len(self.signals_order)
         turn = self.signals_order[self.turn]
 
         x_i = swarm.x[turn]
+        v_i = swarm.v[turn]
 
-        # ========== 3. Соседи в радиусе ==========
         xdiff = np.abs(swarm.x - x_i)
         mask = (xdiff <= R0) & (np.arange(N) != turn)
+        # mask[turn] = False
         idxs = np.where(mask)[0]
 
         acc_turn = 0.0
+        i = turn
+        current_step = []
 
-        # ========== 4. Обработка каждого соседа ==========
+        direction_to_alpha = np.sign(swarm.x[alpha] - x_i) # -1 if turn > alpha else 1
         for j in idxs:
             key = (turn, j)
 
-            # --- EKF инициализация ---
+            # получаем измерение расстояния с прибора
+            d_measure = swarm.x[j] - x_i
+
+            # инит EKF если еще нет для этой пары
             if key not in self.rel_filters:
-                kf = EKF(dt)
-                kf.x[0] = swarm.x[j] - x_i   # начальная дистанция
+                kf = EKF(dt, s_0=d_measure)
                 self.rel_filters[key] = kf
             else:
                 kf = self.rel_filters[key]
-
-            # --- predict ---
-            if kf.last_t is None:
-                dt_ekf = dt
-            else:
-                dt_ekf = t - kf.last_t
+            dt_ekf = dt if kf.last_t is None else t - kf.last_t
+            # 1. предсказание
             kf.predict(dt_ekf)
-
-            # --- update ---
-            d_meas = swarm.x[j] - x_i
-            kf.update(d_meas)
+            # 2. обновление
+            kf.update(d_measure)
             kf.last_t = t
+            # получение данных
+            d_ij = kf.d # x_j - x_i
+            dv = kf.d_dot # v_j - v_i
 
-            # --- timeout "призраков" ---
-            if dt_ekf > self.dead_time:
-                continue
+            ell = swarm.start_coordinates[j] - swarm.start_coordinates[i]
+            k = swarm.m * swarm.a_max/np.abs(ell)
+            b = max(swarm.m / self.tau_lag, 2*np.sqrt(np.abs(k) * swarm.m))
+            force = (k * (d_ij - ell) + b * dv)
+            acc_turn += force
 
-            # ========== 5. Контроллер ==========
-            # желаемая дистанция (из начальной конфигурации)
-          
-            # оценка относительной скорости
-            dv = kf.d_dot
-
-            # ell = 0
-            # s0_base = 1.3 * self.swarm.s0
-            # if dv < -1e-3:  # сближение
-            #     ttc = abs(kf.d) / abs(dv)
-            #     # Увеличить зазор при малом TTC
-            #     beta = 1.0
-            #     ell = s0_base * (1.0 + beta * max(0.0, 1.0 - ttc / self.tau_lag))
-            # else:
-            #     ell = s0_base
-            ell = abs(self.initial_distances[j] - self.initial_distances[turn])
-            # ell = 0.6 * ell + self.tau_lag * 
-            # ошибка по расстоянию
-            tau_pred = dt
-            d_pred = kf.d + kf.d_dot * tau_pred + 0.5 * kf.d_ddot * tau_pred**2
-            dx = d_pred - np.sign(kf.d) * ell # 
-
-            # жёсткость
-            k = swarm.m * self.a_max / ell
-
-            # гейтинг демпфера
-            if abs(dv) < self.eps_vel: #  or abs(kf.d) <= ell * 0.4
-                b = 0.0
-            else:
-                b = self.b_scale * swarm.m / self.tau_lag
-
-            acc_turn += k * dx + b * dv
-
-        v_i = swarm.v[turn]
-        F_fric = -self.friction_coeff * v_i * abs(v_i)
-        acc_turn += F_fric
         acc[turn] = acc_turn / swarm.m
-
         return acc

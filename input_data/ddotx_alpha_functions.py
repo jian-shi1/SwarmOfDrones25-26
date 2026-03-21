@@ -18,22 +18,20 @@ class RectlinearFlucts:
     
 
 class RoughBreak:
-    def __init__(self, a_max = 10.0, v_max=40.0, t_plateau = 100):
+    def __init__(self, a_max = 10.0, v_max=33.0):
         self.a_max = a_max
         self.v_max = v_max
-        self.t1 = v_max / (a_max / 3)
-        self.t2 = self.t1 + t_plateau
-        self.t3 = self.t2 + self.t1
+
+        self.t1 = v_max / (a_max * 0.3)
+        self.t2 = self.t1 + (v_max / a_max)
+        self.T = self.t2
+
         self.zero = 0.0
 
     def __call__(self, t):
-        if t < 0:
-            return self.zero
-        elif t < self.t1:
-            return self.a_max
-        elif t < self.t2:
-            return self.zero
-        elif t < self.t3:
-            return -self.a_max
+        t_cycle = t % self.T
+
+        if t_cycle < self.t1:
+            return self.a_max * 0.3
         else:
-            return self.zero
+            return -self.a_max

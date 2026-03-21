@@ -1,13 +1,13 @@
 ﻿from SMDController import SMDController
-from input_data.ddotx_alpha_functions import RectlinearFlucts, RoughBreak
 from Swarm import Swarm
-# import cyclogram
-from typing import Tuple, List, Callable, Literal
 # from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
 import dill
+from cyclogram import CycType
 
+g = 9.81
+v_max = 100/3
 
 def run_simulation(N, alpha_idx, s0, H, T, a_max, m, ddotx_func, start_coordinates, R0, signals_order, tau_lag=1.0):
     """
@@ -37,7 +37,6 @@ def run_simulation(N, alpha_idx, s0, H, T, a_max, m, ddotx_func, start_coordinat
     return swarm
 
 if __name__ == "__main__":
-    CycType = Literal["Trajectories", "Velocities", "Accelerations"]
     g = 9.81
     v_max = 100/3
     with open("sims_configs.pkl", "rb") as f:

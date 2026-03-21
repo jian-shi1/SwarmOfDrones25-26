@@ -1,10 +1,15 @@
 ﻿import numpy as np
 import matplotlib.pyplot as plt
+from typing import Literal
 
-def cyclogram(traj, times, alpha_idx=0, ax=None, relative=True, limit=None, idx=None, type_data: CycType ='Trajectories'):
+CycType = Literal["Trajectories", "Velocities", "Accelerations"]
+
+def cyclogram(traj, times, alpha_idx=0, ax=None, relative=True, limit_head=None, limit_tail=None, idx=None, type_data: CycType ='Trajectories'):
     """
     Визуализируем траекторию, скорость или ускорение (для двух последних - только альфу)
     """
+    assert ((limit_head is None) & (limit_tail is None)) | ((limit_head is None) ^ (limit_tail is None))
+
     fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -18,10 +23,13 @@ def cyclogram(traj, times, alpha_idx=0, ax=None, relative=True, limit=None, idx=
     n_steps = len(times)
 
     # Обрезаем, если смотрим конечный участок
-    if limit is not None and limit > 0:
-        start = max(0, n_steps - limit)
+    if limit_tail is not None and limit_tail > 0:
+        start = max(0, n_steps - limit_tail)
         plot_traj = traj[start:]
         plot_times = times[start:]
+    elif limit_head is not None and limit_head > 0:
+        plot_traj = traj[:limit_head]
+        plot_times = times[:limit_head]
     else:
         plot_traj = traj
         plot_times = times
@@ -67,8 +75,10 @@ def cyclogram(traj, times, alpha_idx=0, ax=None, relative=True, limit=None, idx=
     title = f'Cyclogram {idx if idx is not None else ""}: Agents {type_data}'
     if relative:
         title += ", relative to Alpha"
-    if limit is not None:
-        title += f", last {limit} steps"
+    if limit_tail is not None:
+        title += f", last {limit_tail} steps"
+    if limit_head is not None:
+        title += f", first {limit_head} steps"
     # ax.set_title(title)
     ax.grid(True, linestyle='--', alpha=0.6)
 
